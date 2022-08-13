@@ -134,6 +134,22 @@ def search_venues():
   # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_term = request.form.get('search_term', '')
+  venue_search =Venue.query.outerjoin(Venue.shows).filter(Venue.name.ilike('%'+search_term+'%')).all()
+  print(venue_search)
+  data_list = []
+  for venue in venue_search:
+    data = {
+      "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": 0
+    }
+    data_list.append(data)
+  result={
+    "count": len(data_list),
+    "data": data_list
+  }
+
   response={
     "count": 1,
     "data": [{
@@ -142,7 +158,7 @@ def search_venues():
       "num_upcoming_shows": 0,
     }]
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_venues.html', results=result, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -361,6 +377,23 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  search_term = request.form.get('search_term', '')
+  artist_search =Artist.query.outerjoin(Artist.shows).filter(Artist.name.ilike('%'+search_term+'%')).all()
+  data_list = []
+  
+  for artist in artist_search:
+    data = {
+      "id": artist.id,
+      "name": artist.name,
+      # work on upcoming_shows
+      "num_upcoming_shows": 0
+    }
+    data_list.append(data)
+  result={
+    "count": len(data_list),
+    "data": data_list
+  }
+
   response={
     "count": 1,
     "data": [{
@@ -369,7 +402,7 @@ def search_artists():
       "num_upcoming_shows": 0,
     }]
   }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_artists.html', results=result, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
@@ -623,7 +656,7 @@ def edit_venue_submission(venue_id):
   
   finally:
     db.session.close()
-    
+
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -680,6 +713,23 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
+  shows_query = Show.query.all()
+  data_list = []
+  for show in shows_query:
+    venue = Venue.query.get(show.venue_id)
+    artist = Artist.query.get(show.artist_id)
+    data_list.append(
+      {
+        "venue_id": venue.id,
+        "venue_name": venue.name,
+        "artist_id": artist.id,
+        "artist_name": artist.name,
+        "artist_image_link": artist.image_link,
+        "start_time": show.start_time.isoformat()
+      }
+    )
+
+
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -716,7 +766,7 @@ def shows():
     "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
     "start_time": "2035-04-15T20:00:00.000Z"
   }]
-  return render_template('pages/shows.html', shows=data)
+  return render_template('pages/shows.html', shows=data_list)
 
 @app.route('/shows/create')
 def create_shows():
