@@ -514,12 +514,49 @@ def edit_artist(artist_id):
     "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
   }
   # TODO: populate form with fields from artist with ID <artist_id>
+  artist_query = Artist.query.get(artist_id)
+  artist={
+    "id": artist_query.id,
+    "name": artist_query.name,
+    "genres": artist_query.genres,
+    "city": artist_query.city,
+    "state": artist_query.state,
+    "phone": artist_query.phone,
+    "website": artist_query.website_link,
+    "facebook_link": artist_query.facebook_link,
+    "seeking_venue": artist_query.seeking_venue,
+    "seeking_description": artist_query.seeking_description,
+    "image_link": artist_query.image_link
+  }
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
+  try:
+    form = ArtistForm(request.form)
+
+    artist = Artist.query.get(artist_id)
+
+    artist.name = form.name.data
+    artist.city = form.city.data
+    artist.state = form.state.data
+    artist.genres = form.genres.data
+    artist.phone = form.phone.data
+    artist.website_link = form.website_link.data
+    artist.facebook_link = form.facebook_link.data
+    artist.image_link = form.image_link.data
+    artist.seeking_venue = form.seeking_venue.data
+    artist.seeking_description = form.seeking_description.data
+
+    db.session.commit()
+  
+  except:
+    db.session.rollback()
+  
+  finally:
+    db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -541,12 +578,52 @@ def edit_venue(venue_id):
     "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
   }
   # TODO: populate form with values from venue with ID <venue_id>
+  venue_query = Venue.query.get(venue_id)
+  venue={
+    "id": venue_query.id,
+    "name": venue_query.name,
+    "genres": venue_query.genres,
+    "address": venue_query.address,
+    "city": venue_query.city,
+    "state": venue_query.state,
+    "phone": venue_query.phone,
+    "website": venue_query.website_link,
+    "facebook_link": venue_query.facebook_link,
+    "seeking_talent": venue_query.seeking_talent,
+    "seeking_description": venue_query.seeking_description,
+    "image_link": venue_query.image_link
+  }
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
+  try:
+    form = VenueForm(request.form)
+
+    venue = Venue.query.get(venue_id)
+
+    venue.name = form.name.data
+    venue.city = form.city.data
+    venue.state = form.state.data
+    venue.genres = form.genres.data
+    venue.phone = form.phone.data
+    venue.address = form.address.data
+    venue.website_link = form.website_link.data
+    venue.facebook_link = form.facebook_link.data
+    venue.image_link = form.image_link.data
+    venue.seeking_talent = form.seeking_talent.data
+    venue.seeking_description = form.seeking_description.data
+
+    db.session.commit()
+  
+  except:
+    db.session.rollback()
+  
+  finally:
+    db.session.close()
+    
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
