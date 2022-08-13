@@ -24,6 +24,9 @@ class Venue(db.Model):
 
     shows = db.relationship('Show',backref='venues', cascade='delete,all', lazy=True)
 
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -42,6 +45,10 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String())
 
     shows = db.relationship('Show',backref='artists', cascade='delete,all', lazy=True)
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 class Show(db.Model):
