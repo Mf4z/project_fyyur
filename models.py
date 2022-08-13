@@ -57,3 +57,7 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
     start_time = db.Column(db.DateTime, nullable=False)
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
