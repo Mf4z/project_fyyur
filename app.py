@@ -2,6 +2,7 @@
 # Imports
 #----------------------------------------------------------------------------#
 
+from distutils.log import error
 import json
 from os import abort
 import dateutil.parser
@@ -10,7 +11,7 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
-from logging import Formatter, FileHandler
+from logging import Formatter, FileHandler, exception
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
@@ -101,7 +102,8 @@ def venues():
 
       city_state_format = city_state_format_new
 
-  venue_data_list.append(data)
+  if data:
+    venue_data_list.append(data)
 
 
 
@@ -302,25 +304,28 @@ def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead  
   error=False
   try:
-    form = VenueForm()
-    venue = Venue(
-        name=form.name.data,
-        city=form.city.data,
-        state=form.state.data,
-        address=form.address.data,
-        phone=form.phone.data,
-        image_link=form.image_link.data,
-        facebook_link=form.facebook_link.data,
-        genres=form.genres.data,
-        website_link=form.website_link.data,
-        seeking_talent=form.seeking_talent.data,
-        seeking_description=form.seeking_description.data,
-      )
-    venue.insert()
-    # on successful db insert, flash success
-    # TODO: modify data to be the data object returned from db insertion
-    flash('Venue ' + form.name.data + ' was successfully listed!')
-    # flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    form = VenueForm(request.form)
+    if form.validate():
+      venue = Venue(
+          name=form.name.data,
+          city=form.city.data,
+          state=form.state.data,
+          address=form.address.data,
+          phone=form.phone.data,
+          image_link=form.image_link.data,
+          facebook_link=form.facebook_link.data,
+          genres=form.genres.data,
+          website_link=form.website_link.data,
+          seeking_talent=form.seeking_talent.data,
+          seeking_description=form.seeking_description.data,
+        )
+      venue.insert()
+      # on successful db insert, flash success
+      # TODO: modify data to be the data object returned from db insertion
+      flash('Venue ' + form.name.data + ' was successfully listed!')
+      # flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    else: 
+      error = True
     
   except:
     db.session.rollback()
@@ -341,6 +346,15 @@ def create_venue_submission():
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+  try:
+    venue = Venue.query.get(venue_id)
+    db.session.delete(venue)
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+  
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
@@ -382,11 +396,15 @@ def search_artists():
   data_list = []
   
   for artist in artist_search:
+    num_upcoming_shows = 0
+    for show in artist.shows:
+      if show.start_time > datetime.now():
+        num_upcoming_shows+=1
+
     data = {
       "id": artist.id,
       "name": artist.name,
-      # work on upcoming_shows
-      "num_upcoming_shows": 0
+      "num_upcoming_shows": num_upcoming_shows
     }
     data_list.append(data)
   result={
@@ -569,21 +587,21 @@ def edit_artist_submission(artist_id):
   # artist record with ID <artist_id> using the new attributes
   try:
     form = ArtistForm(request.form)
+    if form.validate():
+      artist = Artist.query.get(artist_id)
 
-    artist = Artist.query.get(artist_id)
+      artist.name = form.name.data
+      artist.city = form.city.data
+      artist.state = form.state.data
+      artist.genres = form.genres.data
+      artist.phone = form.phone.data
+      artist.website_link = form.website_link.data
+      artist.facebook_link = form.facebook_link.data
+      artist.image_link = form.image_link.data
+      artist.seeking_venue = form.seeking_venue.data
+      artist.seeking_description = form.seeking_description.data
 
-    artist.name = form.name.data
-    artist.city = form.city.data
-    artist.state = form.state.data
-    artist.genres = form.genres.data
-    artist.phone = form.phone.data
-    artist.website_link = form.website_link.data
-    artist.facebook_link = form.facebook_link.data
-    artist.image_link = form.image_link.data
-    artist.seeking_venue = form.seeking_venue.data
-    artist.seeking_description = form.seeking_description.data
-
-    db.session.commit()
+      db.session.commit()
   
   except:
     db.session.rollback()
@@ -612,7 +630,7 @@ def edit_venue(venue_id):
   }
   # TODO: populate form with values from venue with ID <venue_id>
   venue_query = Venue.query.get(venue_id)
-  venue={
+  venue = {
     "id": venue_query.id,
     "name": venue_query.name,
     "genres": venue_query.genres,
@@ -634,22 +652,22 @@ def edit_venue_submission(venue_id):
   # venue record with ID <venue_id> using the new attributes
   try:
     form = VenueForm(request.form)
+    if form.validate():
+      venue = Venue.query.get(venue_id)
 
-    venue = Venue.query.get(venue_id)
+      venue.name = form.name.data
+      venue.city = form.city.data
+      venue.state = form.state.data
+      venue.genres = form.genres.data
+      venue.phone = form.phone.data
+      venue.address = form.address.data
+      venue.website_link = form.website_link.data
+      venue.facebook_link = form.facebook_link.data
+      venue.image_link = form.image_link.data
+      venue.seeking_talent = form.seeking_talent.data
+      venue.seeking_description = form.seeking_description.data
 
-    venue.name = form.name.data
-    venue.city = form.city.data
-    venue.state = form.state.data
-    venue.genres = form.genres.data
-    venue.phone = form.phone.data
-    venue.address = form.address.data
-    venue.website_link = form.website_link.data
-    venue.facebook_link = form.facebook_link.data
-    venue.image_link = form.image_link.data
-    venue.seeking_talent = form.seeking_talent.data
-    venue.seeking_description = form.seeking_description.data
-
-    db.session.commit()
+      db.session.commit()
   
   except:
     db.session.rollback()
@@ -673,25 +691,30 @@ def create_artist_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   error=False
   try:
-    form = ArtistForm()
-    artist = Artist(
-        name=form.name.data,
-        city=form.city.data,
-        state=form.state.data,
-        phone=form.phone.data,
-        genres=form.genres.data,
-        image_link=form.image_link.data,
-        facebook_link=form.facebook_link.data,
-        website_link=form.website_link.data,
-        seeking_venue=form.seeking_venue.data,
-        seeking_description=form.seeking_description.data,
-      )      
-    artist.insert()
-    # TODO: modify data to be the data object returned from db insertion
-    # on successful db insert, flash success
-    flash('Artist ' + form.name.data + ' was successfully listed!')
-    # flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  except:
+    form = ArtistForm(request.form)
+    if form.validate():
+      artist = Artist(
+          name=form.name.data,
+          city=form.city.data,
+          state=form.state.data,
+          phone=form.phone.data,
+          genres=form.genres.data,
+          image_link=form.image_link.data,
+          facebook_link=form.facebook_link.data,
+          website_link=form.website_link.data,
+          seeking_venue=form.seeking_venue.data,
+          seeking_description=form.seeking_description.data,
+        )      
+      artist.insert()
+      # TODO: modify data to be the data object returned from db insertion
+      # on successful db insert, flash success
+      flash('Artist ' + form.name.data + ' was successfully listed!')
+      # flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    else:
+      error=True
+
+  except Exception as e:
+    print(e)
     db.session.rollback()
     error=True
     flash('An error occurred. Artist ' + form.name.data + ' could not be listed.')
@@ -779,11 +802,15 @@ def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   error=False
   try:
-    form = ShowForm()
-    show = Show(artist_id=form.artist_id.data,
-        venue_id=form.venue_id.data,
-        start_time=form.start_time.data)
-    show.insert()
+    form = ShowForm(request.form)
+    if form.validate():
+      show = Show(artist_id=form.artist_id.data,
+          venue_id=form.venue_id.data,
+          start_time=form.start_time.data)
+      show.insert()
+    else:
+      error=True
+
   except:
     db.session.rollback()
     error=True
