@@ -128,7 +128,7 @@ def venues():
       "num_upcoming_shows": 0,
     }]
   }]
-  # return render_template('pages/venues.html', areas=data)
+  
   return render_template('pages/venues.html', areas=venue_data_list)
 
 @app.route('/venues/search', methods=['POST'])
@@ -147,6 +147,7 @@ def search_venues():
       "num_upcoming_shows": 0
     }
     data_list.append(data)
+
   result={
     "count": len(data_list),
     "data": data_list
@@ -207,9 +208,6 @@ def show_venue(venue_id):
     "past_shows_count": len(past_shows),
     "upcoming_shows_count": len(upcoming_shows),
   }
-
-
-
 
   data1={
     "id": 1,
@@ -288,7 +286,7 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
-  # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
+  
   return render_template('pages/show_venue.html', venue=venues_data)
 
 #  Create Venue
@@ -383,7 +381,7 @@ def artists():
     "id": 6,
     "name": "The Wild Sax Band",
   }]
-  # return render_template('pages/artists.html', artists=data)
+  
   return render_template('pages/artists.html', artists= artist_data_list)
 
 @app.route('/artists/search', methods=['POST'])
@@ -468,9 +466,6 @@ def show_artist(artist_id):
     "upcoming_shows_count": len(upcoming_shows),
   }
 
-
-
-
   data1={
     "id": 4,
     "name": "Guns N Petals",
@@ -542,8 +537,7 @@ def show_artist(artist_id):
     "past_shows_count": 0,
     "upcoming_shows_count": 3,
   }
-  # data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
-  # return render_template('pages/show_artist.html', artist=data)
+  
   return render_template('pages/show_artist.html', artist=artist_data)
 
 #  Update
@@ -752,7 +746,6 @@ def shows():
       }
     )
 
-
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -836,7 +829,6 @@ def not_found_error(error):
 @app.errorhandler(500)
 def server_error(error):
     return render_template('errors/500.html'), 500
-
 
 if not app.debug:
     file_handler = FileHandler('error.log')
