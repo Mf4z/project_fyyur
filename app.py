@@ -16,6 +16,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 from models import *
+import config
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -26,7 +27,7 @@ app.config.from_object('config')
 db.init_app(app)
 migrate = Migrate(app, db)
 # TODO: connect to a local postgresql database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:1234@localhost:5432/project_fyyur'
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #----------------------------------------------------------------------------#
@@ -141,11 +142,17 @@ def search_venues():
   print(venue_search)
   data_list = []
   for venue in venue_search:
+    num_upcoming_shows = 0
+    for show in venue.shows:
+      if show.start_time > datetime.now():
+        num_upcoming_shows+=1
+        
     data = {
       "id": venue.id,
       "name": venue.name,
-      "num_upcoming_shows": 0
+      "num_upcoming_shows": num_upcoming_shows
     }
+
     data_list.append(data)
 
   result={
@@ -301,6 +308,7 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead  
   error=False
+  exception_msg = ''
   try:
     form = VenueForm(request.form)
     if form.validate():
@@ -324,16 +332,19 @@ def create_venue_submission():
       # flash('Venue ' + request.form['name'] + ' was successfully listed!')
     else: 
       error = True
-    
-  except:
+      for field,error in form.errors.items():
+        exception_msg += field + ' field  has ' + error[0] + ','
+
+  except Exception as e:
     db.session.rollback()
     flash('An error occurred. Venue ' + form.name.data + ' could not be listed.')
+    exception_msg = str(e)
     error=True
   finally:
     db.session.close()
   
   if error:
-    abort(500)
+    flash('An error occurred. '+ exception_msg + ' Venue could not be listed.')
 
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
@@ -684,6 +695,7 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   error=False
+  exception_msg = ''
   try:
     form = ArtistForm(request.form)
     if form.validate():
@@ -706,11 +718,13 @@ def create_artist_submission():
       # flash('Artist ' + request.form['name'] + ' was successfully listed!')
     else:
       error=True
+      for field,error in form.errors.items():
+        exception_msg += field + ' field  has ' + error[0] + ','
 
   except Exception as e:
-    print(e)
     db.session.rollback()
     error=True
+    exception_msg = str(e)
     flash('An error occurred. Artist ' + form.name.data + ' could not be listed.')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
@@ -718,7 +732,7 @@ def create_artist_submission():
     db.session.close()
 
   if error:
-    abort(500)
+    flash('An error occurred. '+ exception_msg + ' Artist could not be listed.')
 
   return render_template('pages/home.html')
 
